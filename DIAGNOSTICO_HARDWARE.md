@@ -219,3 +219,33 @@ noche esa simulación verifica decisiones de software, no tiempos de interrupci�
 noche se reserva un buffer TX de8192 bytes para menú y matrices, sin espera de transmisión durante movimiento; si faltan líneas hay que repetir con traza apagada, porque log_perdidos mide cola de eventos y no todas las posibles pérdidas del receptor USB.
 noche no se cargó firmware ni se hicieron movimientos físicos desde las herramientas del asistente.
 noche el usuario seleccionó «otra configuración» para alimentación/adaptación y todavía debe describirla; no se considera confirmada la compatibilidad eléctrica de A/B ni ECHO.
+
+## noche prueba reproducible del capturador en PC
+
+Desde la raíz del repositorio, con Python 3 y un compilador GCC o Clang con
+soporte para C++17:
+
+```sh
+python tests/host/run.py
+```
+
+En equipos donde Python 3 se invoca como `python3`, usá esa variante.
+Si el compilador no está en PATH como `g++`, indicá su ejecutable con
+`--cxx` o la variable `CXX`. El ejecutor compila `EncoderDiagnostico.cpp`
+con el `Cuadratura.h` real y los pines de `Config.h`. El ejecutable se crea
+en una carpeta temporal.
+
+La prueba verifica las 16 transiciones por rueda, ciclos de +4 y −4,
+flancos por canal, estados repetidos, saltos inválidos, reinicio desde los
+cuatro estados, captura de ambas ruedas desde una misma interrupción y
+orden de entrega de la cola. Con 300 pasos inyectados, la cola conserva
+255 eventos y reporta 45 descartados. El contador registra los 300 pasos.
+
+Para comprobar que una expectativa incorrecta produce un error, ejecutá
+`python tests/host/run.py --expect-failure`. Debe mostrar el fallo de
+`stats.cuentas == expected` y terminar con código 1.
+
+Esta prueba en PC valida la lógica con señales sintéticas y callbacks
+invocados en secuencia. Quedan pendientes el servicio real de
+interrupciones, los niveles y el ruido de A/B, la alimentación y la
+calibración física. Las pruebas físicas siguen suspendidas.
